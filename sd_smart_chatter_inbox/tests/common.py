@@ -6,6 +6,14 @@ from odoo.tests import TransactionCase, new_test_user
 SCI = "sd_smart_chatter_inbox.group_sci_user"
 
 
+def _set_include_untriaged(env, enabled):
+    params = env["ir.config_parameter"].sudo()
+    if hasattr(params, "set_bool"):  # Odoo 20 typed parameters
+        params.set_bool("sd_smart_chatter_inbox.include_untriaged", enabled)
+    else:  # Odoo 19
+        params.set_param("sd_smart_chatter_inbox.include_untriaged", "True" if enabled else "")
+
+
 class SciCommon(TransactionCase):
     """Two companies, two teams, sales users with and without the inbox group, and leads
     covering every workflow state, a lead hidden by record rules, an untriaged lead and a
@@ -17,7 +25,7 @@ class SciCommon(TransactionCase):
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True, mail_create_nolog=True))
         Lead = cls.env["crm.lead"]
         # Do not depend on the database's current setting (demo databases may enable it).
-        cls.env["ir.config_parameter"].sudo().set_param("sd_smart_chatter_inbox.include_untriaged", "")
+        _set_include_untriaged(cls.env, False)
         cls.company_a = cls.env.company
         cls.company_b = cls.env["res.company"].create({"name": "SCI Company B"})
 
@@ -77,5 +85,4 @@ class SciCommon(TransactionCase):
         return {item["lead_id"] for item in self.page(user, filters, limit=100, **kwargs)["items"]}
 
     def set_include_untriaged(self, enabled):
-        self.env["ir.config_parameter"].sudo().set_param(
-            "sd_smart_chatter_inbox.include_untriaged", "True" if enabled else "")
+        _set_include_untriaged(self.env, enabled)

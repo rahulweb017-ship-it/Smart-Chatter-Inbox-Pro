@@ -52,6 +52,21 @@ registry.category("web_tour.tours").add("sci_inbox_tour", {
             trigger: ".o_sci_row:contains(SCI Tour lead) .o_sci_badge_waiting",
         },
         {
+            content: "Schedule Follow-up opens Odoo's native activity dialog",
+            trigger: ".o_sci_schedule:enabled",
+            run: "click",
+        },
+        {
+            trigger: ".modal .o_form_view .o_field_widget[name=activity_type_id]",
+        },
+        {
+            trigger: ".modal-header .btn-close",
+            run: "click",
+        },
+        {
+            trigger: "body:not(:has(.modal))",
+        },
+        {
             content: "Open Chatter navigates to the native CRM form",
             trigger: ".o_sci_row:contains(SCI Tour lead) .o_sci_row_open",
             run: "click",
