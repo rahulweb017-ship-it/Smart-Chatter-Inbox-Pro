@@ -3,6 +3,15 @@ import { registry } from "@web/core/registry";
 registry.category("web_tour.tours").add("sci_inbox_tour", {
     steps: () => [
         {
+            content: "Styles compiled (a SCSS error would leave the page unstyled)",
+            trigger: ".o_sci_inbox",
+            run: function () {
+                if (getComputedStyle(this.anchor).display !== "flex") {
+                    throw new Error("Smart Chatter Inbox styles are not applied");
+                }
+            },
+        },
+        {
             content: "The inbox lists the lead that needs action",
             trigger: ".o_sci_row:contains(SCI Tour lead)",
             run: "click",

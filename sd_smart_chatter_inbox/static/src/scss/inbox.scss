@@ -282,7 +282,9 @@
             top: 0;
             bottom: 0;
             left: 0;
-            width: min(300px, 85vw);
+            // No min(): libsass would evaluate it as a Sass function and fail on mixed units.
+            width: 300px;
+            max-width: 85vw;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 
             &.o_sci_open {

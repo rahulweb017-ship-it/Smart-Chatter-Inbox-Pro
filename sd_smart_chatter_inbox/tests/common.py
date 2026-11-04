@@ -16,6 +16,8 @@ class SciCommon(TransactionCase):
         super().setUpClass()
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True, mail_create_nolog=True))
         Lead = cls.env["crm.lead"]
+        # Do not depend on the database's current setting (demo databases may enable it).
+        cls.env["ir.config_parameter"].sudo().set_param("sd_smart_chatter_inbox.include_untriaged", "")
         cls.company_a = cls.env.company
         cls.company_b = cls.env["res.company"].create({"name": "SCI Company B"})
 
