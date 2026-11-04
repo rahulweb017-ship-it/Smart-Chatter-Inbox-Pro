@@ -22,7 +22,11 @@ def user(login, name):
 maya = user("maya.demo", "Maya Fernandes")
 leo = user("leo.demo", "Leo Brandt")
 team.member_ids = [(4, admin.id), (4, maya.id), (4, leo.id)]
-env["ir.config_parameter"].set_param("sd_smart_chatter_inbox.include_untriaged", "True")
+params = env["ir.config_parameter"]
+if hasattr(params, "set_bool"):  # Odoo 20
+    params.set_bool("sd_smart_chatter_inbox.include_untriaged", True)
+else:
+    params.set_param("sd_smart_chatter_inbox.include_untriaged", "True")
 
 now = fields.Datetime.now()
 rows = [

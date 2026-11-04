@@ -75,12 +75,18 @@ class TestInboxSecurity(SciCommon):
 
     def test_sec04_read_only_user_cannot_write_workflow(self):
         # Simulate a deployment that restricts writes on one lead (global rule, write only).
-        self.env["ir.rule"].create({
-            "name": "SCI test: lead A2 is read-only",
-            "model_id": self.env["ir.model"]._get_id("crm.lead"),
-            "domain_force": f"[('id', '!=', {self.lead_a2.id})]",
-            "perm_read": False, "perm_write": True, "perm_create": False, "perm_unlink": False,
-        })
+        domain = f"[('id', '!=', {self.lead_a2.id})]"
+        model_id = self.env["ir.model"]._get_id("crm.lead")
+        if "ir.rule" in self.env:  # Odoo 19: record rules
+            self.env["ir.rule"].create({
+                "name": "SCI test: lead A2 is read-only", "model_id": model_id, "domain_force": domain,
+                "perm_read": False, "perm_write": True, "perm_create": False, "perm_unlink": False,
+            })
+        else:  # Odoo 20: ir.access entries without a group restrict every user
+            self.env["ir.access"].create({
+                "name": "SCI test: lead A2 is read-only", "model_id": model_id, "operation": "u",
+                "domain": domain,
+            })
         Lead = self.env["crm.lead"].with_user(self.sales_a)
         item = Lead.sci_get_item(self.lead_a2.id)
         self.assertFalse(item["can_write"])
