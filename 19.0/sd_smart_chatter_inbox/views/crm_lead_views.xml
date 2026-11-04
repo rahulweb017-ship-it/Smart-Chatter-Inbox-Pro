@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form_sci" model="ir.ui.view">
+        <field name="name">crm.lead.form.smart.chatter.inbox</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='internal_notes']" position="after">
+                <page string="Smart Inbox" name="sci_smart_inbox" groups="sd_smart_chatter_inbox.group_sci_user">
+                    <group>
+                        <group>
+                            <field name="sci_state" placeholder="Not triaged (Needs Action)"/>
+                            <field name="sci_snooze_until"
+                                   invisible="sci_state != 'snoozed'"
+                                   required="sci_state == 'snoozed'"/>
+                            <field name="sci_owner_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Defaults to the salesperson"/>
+                        </group>
+                        <group>
+                            <field name="sci_updated_at"/>
+                            <field name="sci_updated_by_id" options="{'no_open': True}"/>
+                        </group>
+                    </group>
+                    <div class="text-muted small">
+                        The inbox owner is follow-up metadata only: it does not change the salesperson
+                        and does not give anyone access to this lead.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
