@@ -40,7 +40,10 @@ rows = [
     ("Pricing question via website", "Sakura Trading 株式会社", admin, False, None, None),
 ]
 for name, partner, sp, state, owner, snooze in rows:
-    if Lead.search([("name", "=", name)]):
+    existing = Lead.search([("name", "=", name)], limit=1)
+    if existing:  # restore demo workflow values (e.g. after an uninstall/reinstall)
+        existing.write({"sci_state": state or False, "sci_owner_id": owner.id if owner else False,
+                        "sci_snooze_until": snooze or False})
         continue
     p = env["res.partner"].create({"name": partner, "is_company": True,
                                     "email": partner.split()[0].lower() + "@example.com"})
