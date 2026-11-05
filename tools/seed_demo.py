@@ -16,6 +16,7 @@ def user(login, name):
             "group_ids": [(6, 0, [env.ref("sales_team.group_sale_salesman_all_leads").id,
                                   env.ref("sd_smart_chatter_inbox.group_sci_user").id])],
         })
+    u.group_ids = [(4, env.ref("sd_smart_chatter_inbox.group_sci_user").id)]  # re-add after a reinstall
     return u
 
 

@@ -1,4 +1,4 @@
-"""Generate the original app icon and store banner (no third-party assets)."""
+"""Generate the original app icon (no third-party assets). The banner comes from make_thumbnail.py."""
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
@@ -33,17 +33,4 @@ d.rectangle([0, 200, 256, 256], fill=TEAL_DARK)
 draw_mark(d, 40, 36, 176)
 icon.save(f"{out}/icon.png")
 
-banner = Image.new("RGB", (1200, 600), TEAL)
-d = ImageDraw.Draw(banner)
-d.rectangle([0, 470, 1200, 600], fill=TEAL_DARK)
-draw_mark(d, 80, 120, 300)
-d.text((440, 140), "Smart Chatter Inbox Pro", font=font(56), fill=WHITE)
-d.text((440, 220), "Your CRM follow-up queue", font=font(36, False), fill=WHITE)
-for i, (label, color) in enumerate(zip(["Needs Action", "Waiting", "Done", "Snoozed"], COLORS)):
-    x = 440 + i * 180
-    d.rounded_rectangle([x, 300, x + 165, 350], radius=25, fill=color)
-    d.text((x + 82, 325), label, font=font(22), fill=WHITE, anchor="mm")
-d.text((80, 510), "Owners - Snooze - Secure filters - Native chatter & activities", font=font(30, False), fill=WHITE)
-d.text((1120, 535), "$19", font=font(48), fill=WHITE, anchor="rm")
-banner.save(f"{out}/banner.png")
 print("images written to", out)
