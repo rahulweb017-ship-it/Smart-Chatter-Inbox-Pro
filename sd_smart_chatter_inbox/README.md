@@ -36,6 +36,11 @@ odoo-bin -c odoo.conf -d <test_db> --addons-path=<odoo>/addons,<parent of this f
 ```
 The browser tour and the Hoot unit tests need Chrome or Chromium.
 
+## Tested
+- Automated: 29 Python tests (including the SEC-01 to SEC-10 security matrix), 10 browser unit tests and a browser tour.
+- Browsers: Chrome and Firefox, at desktop and phone sizes.
+- Speed: 10,000 leads and 100,000 messages, with p95 under 100 ms per call (`doc/BENCHMARK.md`).
+
 ## Known limitations
 - No message preview in this release. The details pane shows lead information and an **Open Chatter** button (see `doc/SECURITY_NOTES.md`).
 - The statuses are a manual workflow. They do not detect unread or unanswered emails.
