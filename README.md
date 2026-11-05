@@ -41,6 +41,16 @@ In Git Bash, prefix the command with `MSYS_NO_PATHCONV=1`. Otherwise Git Bash re
 - `tools/benchmark.py`: AC-08 benchmark with 10,000 leads and 100,000 messages (`odoo-bin shell -d <bench_db> < tools/benchmark.py`). Results are in each version's `doc/BENCHMARK.md`.
 - `tools/browser_smoke.py <url> chromium|firefox`: 13-step check of the real UI on desktop and phone sizes.
 
+## Odoo Apps store branches
+The store reads one branch per Odoo version, with the addon folder at the branch root. Development happens on `master`. The `19.0` and `20.0` branches are generated from it:
+```
+git subtree split --prefix=19.0 -b 19.0 && git push origin 19.0
+git subtree split --prefix=20.0 -b 20.0 && git push origin 20.0
+```
+Repository URLs to register on apps.odoo.com:
+- `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#19.0`
+- `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#20.0`
+
 ## Release ZIPs
 ```
 git archive --format=zip -o dist/sd_smart_chatter_inbox-19.0.1.0.0.zip HEAD:19.0 sd_smart_chatter_inbox
