@@ -30,7 +30,7 @@
             "sd_smart_chatter_inbox/static/tests/tours/**/*.js",
         ],
     },
-    "images": ["static/description/banner.png"],
+    "images": ["static/description/banner.gif"],
     "installable": True,
     "application": False,
 }
