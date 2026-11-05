@@ -21,7 +21,7 @@ def login(page):
     page.fill("input[name=login]", "admin")
     page.fill("input[name=password]", "admin")
     page.click("button[type=submit]")
-    page.wait_for_url("**/odoo**")
+    page.wait_for_url("**/odoo**", timeout=120_000)  # first hit on a new DB builds assets
 
 
 with sync_playwright() as p:

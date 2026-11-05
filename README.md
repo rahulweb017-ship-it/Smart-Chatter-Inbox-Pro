@@ -38,6 +38,8 @@ In Git Bash, prefix the command with `MSYS_NO_PATHCONV=1`. Otherwise Git Bash re
 - `tools/make_images.py`: generates the original icon and banner.
 - `tools/seed_demo.py`: adds made-up demo leads for screenshots (`odoo-bin shell ... < tools/seed_demo.py`).
 - `tools/screenshots.py`: takes the store screenshots with Playwright.
+- `tools/benchmark.py`: AC-08 benchmark with 10,000 leads and 100,000 messages (`odoo-bin shell -d <bench_db> < tools/benchmark.py`). Results are in each version's `doc/BENCHMARK.md`.
+- `tools/browser_smoke.py <url> chromium|firefox`: 13-step check of the real UI on desktop and phone sizes.
 
 ## Release ZIPs
 ```
