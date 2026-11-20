@@ -47,6 +47,8 @@ function item(id, name, extra = {}) {
         effective_owner: { id: 7, name: "Alice" },
         snooze_until: false,
         updated_at: "2026-11-01 10:00:00",
+        awaiting_reply: false,
+        last_incoming_at: false,
         ...extra,
     };
 }
@@ -60,11 +62,14 @@ function detail(id, name, extra = {}) {
         currency: "USD",
         activity_date_deadline: false,
         updated_by: false,
+        last_outgoing_at: false,
+        update_source: false,
         can_write: true,
+        ...extra,
     };
 }
 
-function mockServer({ pages, onUpdate } = {}) {
+function mockServer({ pages, onUpdate, detailExtra = {} } = {}) {
     const calls = [];
     onRpc("crm.lead", "sci_get_filter_options", () => OPTIONS);
     onRpc("crm.lead", "sci_get_inbox_page", ({ args, kwargs }) => {
@@ -75,7 +80,8 @@ function mockServer({ pages, onUpdate } = {}) {
         }
         return { items: page, total: page.length, limit: kwargs.limit, offset: kwargs.offset, has_more: false };
     });
-    onRpc("crm.lead", "sci_get_item", ({ args }) => detail(args[0], `Lead ${args[0] === 1 ? "one" : "two"}`));
+    onRpc("crm.lead", "sci_get_item", ({ args }) =>
+        detail(args[0], `Lead ${args[0] === 1 ? "one" : "two"}`, detailExtra));
     onRpc("crm.lead", "sci_get_owner_candidates", () => [{ id: 7, name: "Alice" }, { id: 8, name: "Bob" }]);
     onRpc("crm.lead", "sci_update_workflow", ({ args, kwargs }) => {
         onUpdate?.(args, kwargs);
@@ -212,4 +218,39 @@ test("keyboard navigation selects rows", async () => {
     await keyDown("ArrowDown");
     await animationFrame();
     expect(".o_sci_row.o_sci_selected").toHaveAttribute("data-lead-id", "2");
+});
+
+test("customer replied chip and Unanswered quick filter", async () => {
+    window.sessionStorage.clear();
+    const calls = mockServer({
+        pages: () => [
+            item(1, "Lead one", { awaiting_reply: true, last_incoming_at: "2026-11-01 10:00:00" }),
+            item(2, "Lead two"),
+        ],
+    });
+    await mountWithCleanup(InboxAction, { props: { action: {} } });
+    expect(".o_sci_row .o_sci_replied").toHaveCount(1);
+    expect(".o_sci_row[data-lead-id='1'] .o_sci_replied").toHaveText(/Customer replied/);
+    await contains(".o_sci_quick_btn[data-quick=unanswered]").click();
+    expect(calls.at(-1).filters.quick).toBe("unanswered");
+    expect(".o_sci_quick_btn.active").toHaveText("Unanswered");
+});
+
+test("detail shows reply dates and that detection set the status", async () => {
+    window.sessionStorage.clear();
+    mockServer({
+        detailExtra: {
+            awaiting_reply: true,
+            last_incoming_at: "2026-11-01 10:00:00",
+            last_outgoing_at: "2026-10-30 09:00:00",
+            update_source: "customer_reply",
+        },
+    });
+    await mountWithCleanup(InboxAction, { props: { action: {} } });
+    await contains(".o_sci_row[data-lead-id='1']").click();
+    expect(".o_sci_last_incoming").toHaveText(/Unanswered/);
+    expect(".o_sci_last_outgoing").toHaveCount(1);
+    expect(".o_sci_source").toHaveText("Set automatically: the customer wrote.");
+    await contains("#o_sci_state").select("waiting");
+    expect(".o_sci_source").toHaveCount(0);
 });

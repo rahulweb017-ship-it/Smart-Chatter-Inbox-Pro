@@ -11,6 +11,10 @@
                              help="Show every active lead/opportunity you can access as Needs Action until it is triaged. When off, only leads with an inbox status appear.">
                         <field name="sci_include_untriaged"/>
                     </setting>
+                    <setting id="sci_auto_detect"
+                             help="A customer email moves the lead to Needs Action and marks it Unanswered. A reply from your team moves it to Waiting. Internal notes are ignored.">
+                        <field name="sci_auto_detect"/>
+                    </setting>
                 </block>
             </xpath>
         </field>
