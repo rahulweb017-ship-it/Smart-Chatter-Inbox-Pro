@@ -4,6 +4,7 @@ An Odoo app that turns CRM leads into a follow-up queue (Needs Action, Waiting, 
 
 | Folder | Odoo version | Module version |
 |---|---|---|
+| `17.0/sd_smart_chatter_inbox` | 17.0 (Community and Enterprise) | 17.0.1.0.0 |
 | `18.0/sd_smart_chatter_inbox` | 18.0 (Community and Enterprise) | 18.0.1.0.0 |
 | `19.0/sd_smart_chatter_inbox` | 19.0 (Community and Enterprise) | 19.0.1.0.0 |
 | `20.0/sd_smart_chatter_inbox` | 20.0 | 20.0.1.0.0 |
@@ -17,7 +18,13 @@ The versions differ only where Odoo changed. Most of the code is identical, incl
 
 18.0 is otherwise identical to 19.0, including the JS, templates and tests.
 
-See each version's `doc/COMPATIBILITY.md` for details. When you fix a bug, fix it in all three folders.
+17.0 is ported from 18.0 and also changes:
+- **`models/crm_lead.py`:** 17 has no `has_access`, `_filtered_access` or `env._`. Small helpers `_sci_has_access` and `_sci_filtered_access` use `check_access_rights` and `_filter_access_rules`, and messages use `_()`.
+- **JS:** every file starts with `/** @odoo-module **/`, which 17 needs to load it as a module.
+- **Unit tests:** 17 has no Hoot, so `static/tests/inbox.test.js` holds the same 10 tests in QUnit (`web.qunit_suite_tests`), run by `tests/test_inbox_qunit.py`.
+- **Tour:** uses the 17 tour format (`test: true`, `isCheck`, `this.$anchor`, `run: "text ..."`) and opens `/web#action=...`, because 17 has no `/odoo/...` URLs.
+
+See each version's `doc/COMPATIBILITY.md` for details. When you fix a bug, fix it in all four folders.
 
 ## Tests (commands used for this release)
 Odoo 19 (local Enterprise install):
@@ -45,6 +52,14 @@ C:\projects\odoo-src\venv18.0\Scripts\python.exe C:\projects\odoo-src\18.0\odoo-
   --data-dir=C:\projects\odoo-src\data18 -i crm,sd_smart_chatter_inbox --test-enable ^
   --test-tags /sd_smart_chatter_inbox --http-port=8079 --stop-after-init
 ```
+Odoo 17 (source checkout): the same filtered config copy as for 18.
+```
+C:\projects\odoo-src\venv17.0\Scripts\python.exe C:\projects\odoo-src\17.0\odoo-bin ^
+  -c %TEMP%\odoo18.conf -d sci_test17 ^
+  --addons-path=C:\projects\odoo-src\17.0\addons,C:\projects\odoo-src\17.0\odoo\addons,C:\projects\Smart_Chatter_Inbox_Pro\17.0 ^
+  --data-dir=C:\projects\odoo-src\data17 -i crm,sd_smart_chatter_inbox --test-enable ^
+  --test-tags /sd_smart_chatter_inbox --http-port=8077 --stop-after-init
+```
 In Git Bash, prefix the command with `MSYS_NO_PATHCONV=1`. Otherwise Git Bash rewrites `/sd_smart_chatter_inbox` into a Windows path and no tests run.
 
 ## Tools
@@ -54,22 +69,25 @@ In Git Bash, prefix the command with `MSYS_NO_PATHCONV=1`. Otherwise Git Bash re
 - `tools/seed_demo.py`: adds made-up demo leads for screenshots (`odoo-bin shell ... < tools/seed_demo.py`).
 - `tools/screenshots.py`: takes the store screenshots with Playwright.
 - `tools/benchmark.py`: AC-08 benchmark with 10,000 leads and 100,000 messages (`odoo-bin shell -d <bench_db> < tools/benchmark.py`). Results are in each version's `doc/BENCHMARK.md`.
-- `tools/browser_smoke.py <url> chromium|firefox`: 13-step check of the real UI on desktop and phone sizes.
+- `tools/browser_smoke.py <url> chromium|firefox`: 13-step check of the real UI on desktop and phone sizes. It detects Odoo 17, which has no `/odoo/...` URLs, and uses `/web#action=...` instead.
 
 ## Odoo Apps store branches
-The store reads one branch per Odoo version, with the addon folder at the branch root. Development happens on `master`. The `18.0`, `19.0` and `20.0` branches are generated from it:
+The store reads one branch per Odoo version, with the addon folder at the branch root. Development happens on `master`. The `17.0`, `18.0`, `19.0` and `20.0` branches are generated from it:
 ```
+git subtree split --prefix=17.0 -b 17.0 && git push origin 17.0
 git subtree split --prefix=18.0 -b 18.0 && git push origin 18.0
 git subtree split --prefix=19.0 -b 19.0 && git push origin 19.0
 git subtree split --prefix=20.0 -b 20.0 && git push origin 20.0
 ```
 Repository URLs to register on apps.odoo.com:
+- `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#17.0`
 - `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#18.0`
 - `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#19.0`
 - `ssh://git@github.com/rahulweb017-ship-it/Smart-Chatter-Inbox-Pro.git#20.0`
 
 ## Release ZIPs
 ```
+git archive --format=zip -o dist/sd_smart_chatter_inbox-17.0.1.0.0.zip HEAD:17.0 sd_smart_chatter_inbox
 git archive --format=zip -o dist/sd_smart_chatter_inbox-18.0.1.0.0.zip HEAD:18.0 sd_smart_chatter_inbox
 git archive --format=zip -o dist/sd_smart_chatter_inbox-19.0.1.0.0.zip HEAD:19.0 sd_smart_chatter_inbox
 git archive --format=zip -o dist/sd_smart_chatter_inbox-20.0.1.0.0.zip HEAD:20.0 sd_smart_chatter_inbox

@@ -3,14 +3,27 @@
 Usage: python tools/browser_smoke.py <base_url> <chromium|firefox> [login] [password]
 Exits non-zero on the first failed check.
 """
+import re
 import sys
+import urllib.error
+import urllib.request
 
 from playwright.sync_api import expect, sync_playwright
 
 BASE, ENGINE = sys.argv[1], sys.argv[2]
 LOGIN = sys.argv[3] if len(sys.argv) > 3 else "admin"
 PASSWORD = sys.argv[4] if len(sys.argv) > 4 else "admin"
-INBOX = f"{BASE}/odoo/action-sd_smart_chatter_inbox.action_sci_inbox"
+def _has_odoo_urls():
+    """Odoo 18+ serves /odoo/...; Odoo 17 only has /web#action=..."""
+    try:
+        urllib.request.urlopen(f"{BASE}/odoo", timeout=30)
+        return True
+    except urllib.error.HTTPError as exc:
+        return exc.code != 404
+
+
+INBOX = (f"{BASE}/odoo/action-sd_smart_chatter_inbox.action_sci_inbox" if _has_odoo_urls()
+         else f"{BASE}/web#action=sd_smart_chatter_inbox.action_sci_inbox")
 errors = []
 
 
@@ -19,7 +32,7 @@ def login(page):
     page.fill("input[name=login]", LOGIN)
     page.fill("input[name=password]", PASSWORD)
     page.click("button[type=submit]")
-    page.wait_for_url("**/odoo**", timeout=120_000)  # first hit on a new DB builds assets
+    page.wait_for_url(re.compile(r"/(odoo|web)(?!/login)"), timeout=120_000)  # first hit on a new DB builds assets
 
 
 def check(label, fn):

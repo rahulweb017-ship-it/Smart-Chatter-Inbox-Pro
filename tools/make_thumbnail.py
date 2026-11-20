@@ -133,7 +133,7 @@ def hero():
     w, h = 1200, 430
     img = gradient(w, h, ring=False)
     d = ImageDraw.Draw(img)
-    chip = "ODOO CRM APP  ·  ODOO 18, 19 & 20  ·  COMMUNITY & ENTERPRISE"
+    chip = "ODOO CRM APP  ·  ODOO 17, 18, 19 & 20  ·  COMMUNITY & ENTERPRISE"
     f = font(17)
     cw = d.textlength(chip, font=f) + 44
     d.rounded_rectangle([(w - cw) / 2, 40, (w + cw) / 2, 76], radius=18, outline=(165, 180, 252), width=2)
