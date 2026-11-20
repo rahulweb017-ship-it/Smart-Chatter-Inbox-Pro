@@ -1,5 +1,12 @@
 # Changelog
 
+## 17.0.1.1.0 (2026-11-21)
+
+- Reply detection: a customer email or message moves the lead to Needs Action and marks it "Customer replied"; a team reply from the chatter moves Needs Action to Waiting. Notes, automated messages, mass mailings and OdooBot are ignored.
+- New "Unanswered" quick filter, "Customer replied" chip with age, and last customer message / last team reply dates in the details pane and on the lead form.
+- New setting "Detect customer replies automatically" (on by default). Existing leads and old messages are not changed on upgrade.
+- Tests: 14 reply-detection tests through the real mail gateway, 2 more QUnit tests and a tour step.
+
 ## 17.0.1.0.0 (2026-11-21)
 
 First release for Odoo 17, ported from 18.0.1.0.0 with the same features. The 10 Hoot unit tests are ported to QUnit, because Odoo 17 has no Hoot.

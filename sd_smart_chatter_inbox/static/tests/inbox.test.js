@@ -40,6 +40,8 @@ function item(id, name, extra = {}) {
         effective_owner: { id: 7, name: "Alice" },
         snooze_until: false,
         updated_at: "2026-11-01 10:00:00",
+        awaiting_reply: false,
+        last_incoming_at: false,
         ...extra,
     };
 }
@@ -53,7 +55,10 @@ function detail(id, name, extra = {}) {
         currency: "USD",
         activity_date_deadline: false,
         updated_by: false,
+        last_outgoing_at: false,
+        update_source: false,
         can_write: true,
+        ...extra,
     };
 }
 
@@ -63,7 +68,7 @@ let target;
  * Mount the inbox with a mocked crm.lead API.
  * Returns the list of sci_get_inbox_page calls ({filters, limit, offset}).
  */
-async function mountInbox({ pages, onUpdate, failPage = false } = {}) {
+async function mountInbox({ pages, onUpdate, failPage = false, detailExtra = {} } = {}) {
     const calls = [];
     const handlers = {
         sci_get_filter_options: () => OPTIONS,
@@ -78,7 +83,7 @@ async function mountInbox({ pages, onUpdate, failPage = false } = {}) {
             }
             return { items: page, total: page.length, limit: kwargs.limit, offset: kwargs.offset, has_more: false };
         },
-        sci_get_item: ({ args }) => detail(args[0], `Lead ${args[0] === 1 ? "one" : "two"}`),
+        sci_get_item: ({ args }) => detail(args[0], `Lead ${args[0] === 1 ? "one" : "two"}`, detailExtra),
         sci_get_owner_candidates: () => [{ id: 7, name: "Alice" }, { id: 8, name: "Bob" }],
         sci_update_workflow: ({ args, kwargs }) => {
             onUpdate?.(args, kwargs);
@@ -223,5 +228,38 @@ QUnit.module("sd_smart_chatter_inbox", (hooks) => {
         await triggerEvent(target, ".o_sci_rows", "keydown", { key: "ArrowDown" });
         await nextTick();
         assert.strictEqual(target.querySelector(".o_sci_row.o_sci_selected").dataset.leadId, "2");
+    });
+
+    QUnit.test("customer replied chip and Unanswered quick filter", async (assert) => {
+        const calls = await mountInbox({
+            pages: () => [
+                item(1, "Lead one", { awaiting_reply: true, last_incoming_at: "2026-11-01 10:00:00" }),
+                item(2, "Lead two"),
+            ],
+        });
+        assert.strictEqual(count(".o_sci_row .o_sci_replied"), 1);
+        assert.ok(/Customer replied/.test(text(".o_sci_row[data-lead-id='1'] .o_sci_replied")));
+        await click(target, ".o_sci_quick_btn[data-quick=unanswered]");
+        await nextTick();
+        assert.strictEqual(calls.at(-1).filters.quick, "unanswered");
+        assert.strictEqual(text(".o_sci_quick_btn.active"), "Unanswered");
+    });
+
+    QUnit.test("detail shows reply dates and that detection set the status", async (assert) => {
+        await mountInbox({
+            detailExtra: {
+                awaiting_reply: true,
+                last_incoming_at: "2026-11-01 10:00:00",
+                last_outgoing_at: "2026-10-30 09:00:00",
+                update_source: "customer_reply",
+            },
+        });
+        await click(target, ".o_sci_row[data-lead-id='1']");
+        await nextTick();
+        assert.ok(/Unanswered/.test(text(".o_sci_last_incoming")));
+        assert.strictEqual(count(".o_sci_last_outgoing"), 1);
+        assert.strictEqual(text(".o_sci_source"), "Set automatically: the customer wrote.");
+        await editSelect(target, "#o_sci_state", "waiting");
+        assert.strictEqual(count(".o_sci_source"), 0);
     });
 });

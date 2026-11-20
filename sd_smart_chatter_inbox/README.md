@@ -3,13 +3,14 @@
 A CRM follow-up queue. Each lead or opportunity gets a follow-up status (**Needs Action**, **Waiting**, **Done**, **Snoozed**) and an owner, so your team can see what needs a reply. Replies, notes and activities still happen in Odoo's own chatter.
 
 - Technical name: `sd_smart_chatter_inbox`
-- Version: 17.0.1.0.0
+- Version: 17.0.1.1.0
 - Depends on: `crm`, `mail`, `web`
 - License: OPL-1. Author: Softdeviser.
 
 ## Features
 - **Queue screen:** CRM > Sales > Smart Chatter Inbox. Filters on the left, the list in the middle, lead details on the right. On a phone, the list and details stack.
-- **Quick filters:** My Queue, Needs Action, Waiting, Snoozed, Done, All Visible.
+- **Reply detection:** a customer email or message moves the lead to Needs Action and marks it **Customer replied**. A reply from your team (Send message) moves it from Needs Action to Waiting. Internal notes, automated messages and mass mailings are ignored. You can turn this off in CRM Settings.
+- **Quick filters:** My Queue, Needs Action, Unanswered, Waiting, Snoozed, Done, All Visible.
 - **More filters:** owner, sales team, company and type, plus search by lead title or customer.
 - **Owner:** a follow-up owner per lead. It never changes the salesperson and never shares the lead.
 - **Snooze:** pick a date and time. The lead comes back to Needs Action when that time passes.
@@ -21,12 +22,12 @@ A CRM follow-up queue. Each lead or opportunity gets a follow-up status (**Needs
 1. Copy `sd_smart_chatter_inbox` into a folder on your `addons_path`.
 2. Update the Apps list and install **CRM Follow Up Inbox | Lead Follow Up, Reminder & Snooze** (technical name `sd_smart_chatter_inbox`).
 3. Give users the group **Smart Chatter Inbox / User** (Settings > Users > Access Rights > Sales section). The administrator gets it on install.
-4. Optional: CRM > Configuration > Settings > **Include untriaged leads**.
+4. Optional: CRM > Configuration > Settings > **Include untriaged leads**. **Detect customer replies automatically** is on by default; it only reacts to messages posted after install.
 
 Works on Odoo.sh and self-hosted Odoo 17 (Community or Enterprise). Odoo Online (SaaS) cannot install custom Python apps.
 
 ## Upgrade and uninstall
-- **Upgrade:** `odoo-bin -u sd_smart_chatter_inbox -d <db>`. Statuses, owners and snoozes are kept.
+- **Upgrade:** `odoo-bin -u sd_smart_chatter_inbox -d <db>`. Statuses, owners and snoozes are kept. Upgrading to 1.1 does not scan old messages: reply detection starts with the next message.
 - **Uninstall:** from Apps. This removes the `sci_*` columns from `crm.lead`. No other data changes.
 
 ## Running the tests
@@ -37,13 +38,14 @@ odoo-bin -c odoo.conf -d <test_db> --addons-path=<odoo>/addons,<parent of this f
 The browser tour and the QUnit unit tests need Chrome or Chromium.
 
 ## Tested
-- Automated: 29 Python tests (including the SEC-01 to SEC-10 security matrix), 10 browser unit tests (QUnit) and a browser tour.
+- Automated: 43 Python tests (including the SEC-01 to SEC-10 security matrix and reply detection through the real mail gateway), 12 browser unit tests (QUnit) and a browser tour.
 - Browsers: Chrome and Firefox, at desktop and phone sizes.
 - Speed: 10,000 leads and 100,000 messages, with p95 under 100 ms per call (`doc/BENCHMARK.md`).
 
 ## Known limitations
 - No message preview in this release. The details pane shows lead information and an **Open Chatter** button (see `doc/SECURITY_NOTES.md`).
-- The statuses are a manual workflow. They do not detect unread or unanswered emails.
+- Reply detection works from who wrote the last message on the lead. It does not track whether an email was opened or read.
+- Odoo 17 does not mark out-of-office auto-replies, so an automatic reply from the customer's mail server counts as a customer message. Mark the lead Waiting again if that happens.
 - The queue covers CRM leads and opportunities only.
 
 ## Support
