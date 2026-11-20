@@ -11,6 +11,11 @@
 5. **Owners cannot widen access.** An owner must be an active internal user in the inbox group, on the lead's team (or be its salesperson, the team leader, or the current user), and must already be able to read the lead. Nothing is shared.
 6. **No messages are returned.** The API returns only lead fields, never `mail.message` bodies, attachments or subjects. The UI escapes all text (`t-esc`, no `t-raw`/`markup`).
 7. **No outside services.** Nothing is sent to analytics or any third party.
+8. **Reply detection writes with one narrow `sudo()`.** When a message is posted on a lead, `_sci_on_message_posted` may update that lead's own `sci_*` workflow fields (`sci_state`, `sci_awaiting_reply`, `sci_last_incoming_at`, `sci_last_outgoing_at`, `sci_update_source`, `sci_updated_by_id`).
+   - Why sudo: incoming email is posted by OdooBot through the mail gateway, and a colleague outside the inbox group may reply. Neither can write fields protected by `groups=`, and posting a message must never fail because of this app.
+   - Scope: only the one lead the message was posted on, and only those fields. Reading the message type, subtype and author to classify it also uses sudo. Nothing read this way is returned to any user.
+   - It never shares a lead, changes the salesperson, or reads a message body.
+   - Tests: `tests/test_inbox_autodetect.py`. These cover a user outside the group posting, Unanswered respecting record rules, and notes, OdooBot, automated messages and mass mailings being ignored.
 
 ## Security test matrix (all automated, `tests/test_inbox_security.py`)
 | ID | Scenario | Test |

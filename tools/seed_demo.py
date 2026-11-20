@@ -59,5 +59,19 @@ for name, partner, sp, state, owner, snooze in rows:
     if snooze:
         vals["sci_snooze_until"] = snooze
     Lead.create(vals)
+
+# Customer emails, so reply detection has something to show (Unanswered list, "Customer replied").
+# Posted like an incoming email: message_type "email", authored by the customer.
+if "sci_awaiting_reply" in Lead._fields:
+    replies = {
+        "Annual support renewal": "Hi, can you send the renewal quote before Friday?",
+        "Quote follow-up: 12 licenses": "We are ready to sign. Can we get 15 licenses at the same price?",
+        "ERP rollout – 40 users": "Following up: did you get our requirements document?",
+    }
+    for name, body in replies.items():
+        lead = Lead.search([("name", "=", name)], limit=1)
+        if lead and not lead.sci_awaiting_reply:
+            lead.message_post(body=body, message_type="email", author_id=lead.partner_id.id,
+                              subtype_xmlid="mail.mt_comment")
 env.cr.commit()
 print("seeded", Lead.search_count([]))

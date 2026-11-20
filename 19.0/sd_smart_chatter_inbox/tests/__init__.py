@@ -1,4 +1,5 @@
 from . import test_inbox_assets
+from . import test_inbox_autodetect
 from . import test_inbox_filters
 from . import test_inbox_hoot
 from . import test_inbox_security

@@ -12,6 +12,10 @@ registry.category("web_tour.tours").add("sci_inbox_tour", {
             },
         },
         {
+            content: "Reply detection flagged the customer's email",
+            trigger: ".o_sci_row:contains(SCI Tour lead) .o_sci_replied:contains(Customer replied)",
+        },
+        {
             content: "The inbox lists the lead that needs action",
             trigger: ".o_sci_row:contains(SCI Tour lead)",
             run: "click",

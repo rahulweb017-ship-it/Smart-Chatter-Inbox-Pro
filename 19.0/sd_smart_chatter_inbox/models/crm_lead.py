@@ -4,9 +4,13 @@ from odoo.fields import Domain
 
 SCI_GROUP = "sd_smart_chatter_inbox.group_sci_user"
 SCI_STATES = ("needs_action", "waiting", "done", "snoozed")
-SCI_QUICK_FILTERS = ("my", "needs_action", "waiting", "done", "snoozed", "all")
+SCI_QUICK_FILTERS = ("my", "needs_action", "unanswered", "waiting", "done", "snoozed", "all")
 SCI_LEAD_TYPES = ("lead", "opportunity")
 SCI_WORKFLOW_FIELDS = {"sci_state", "sci_owner_id", "sci_snooze_until"}
+SCI_AUTO_DETECT_OFF_PARAM = "sd_smart_chatter_inbox.disable_auto_detect"
+# Only messages a person wrote count. Skipped: notes, tracking/system notifications,
+# automated messages (auto_comment), mass mailings (email_outgoing) and out-of-office replies.
+SCI_CONVERSATION_TYPES = ("email", "comment")
 SCI_DEFAULT_LIMIT = 30
 SCI_MAX_LIMIT = 100
 SCI_MAX_SEARCH = 100
@@ -14,10 +18,11 @@ SCI_ORDER = "sci_updated_at DESC NULLS LAST, id DESC"
 SCI_LIST_FIELDS = [
     "name", "type", "partner_id", "partner_name", "contact_name", "stage_id", "user_id",
     "team_id", "company_id", "priority", "sci_state", "sci_owner_id", "sci_snooze_until",
-    "sci_updated_at",
+    "sci_updated_at", "sci_awaiting_reply", "sci_last_incoming_at",
 ]
 SCI_DETAIL_FIELDS = SCI_LIST_FIELDS + [
     "email_from", "phone", "expected_revenue", "activity_date_deadline", "sci_updated_by_id",
+    "sci_last_outgoing_at", "sci_update_source",
 ]
 
 
@@ -37,7 +42,7 @@ class CrmLead(models.Model):
         copy=False,
         index=True,
         groups=SCI_GROUP,
-        help="Needs Action: team follow-up pending (a manual workflow state, not proof an email is unread).\n"
+        help="Needs Action: team follow-up pending. Set automatically when the customer writes.\n"
         "Waiting: a response is expected from the customer or a third party.\n"
         "Done: no immediate follow-up needed.\n"
         "Snoozed: hidden from Needs Action until the snooze date/time.",
@@ -57,6 +62,21 @@ class CrmLead(models.Model):
     sci_updated_by_id = fields.Many2one(
         "res.users", string="Inbox Updated By", copy=False, readonly=True, groups=SCI_GROUP,
     )
+    # Reply detection. Like the fields above, none has a default, so installing or upgrading
+    # writes nothing to existing leads: they are only set by messages posted afterwards.
+    sci_awaiting_reply = fields.Boolean(
+        string="Customer Replied", copy=False, readonly=True, index=True, groups=SCI_GROUP,
+        help="The customer wrote last and the team has not replied yet.",
+    )
+    sci_last_incoming_at = fields.Datetime(
+        string="Last Customer Message", copy=False, readonly=True, groups=SCI_GROUP)
+    sci_last_outgoing_at = fields.Datetime(
+        string="Last Team Reply", copy=False, readonly=True, groups=SCI_GROUP)
+    sci_update_source = fields.Selection(
+        [("manual", "Manual"), ("customer_reply", "Customer replied"), ("team_reply", "Team replied")],
+        string="Status Set By", copy=False, readonly=True, groups=SCI_GROUP,
+        help="Whether the inbox status was last set by a person or by reply detection.",
+    )
 
     @api.constrains("sci_state", "sci_snooze_until")
     def _check_sci_snooze(self):
@@ -71,7 +91,62 @@ class CrmLead(models.Model):
                 vals["sci_snooze_until"] = False
             vals.setdefault("sci_updated_at", fields.Datetime.now())
             vals.setdefault("sci_updated_by_id", self.env.uid)
+            if "sci_state" in vals:
+                vals.setdefault("sci_update_source", "manual")
+                # Marking a lead Waiting or Done by hand means it was dealt with.
+                if vals["sci_update_source"] == "manual" and vals["sci_state"] in ("waiting", "done"):
+                    vals.setdefault("sci_awaiting_reply", False)
         return super().write(vals)
+
+    # ------------------------------------------------------------------
+    # Reply detection
+    # ------------------------------------------------------------------
+
+    def _message_post_after_hook(self, message, msg_vals):
+        result = super()._message_post_after_hook(message, msg_vals)
+        self._sci_on_message_posted(message)
+        return result
+
+    @api.model
+    def _sci_auto_detect_enabled(self):
+        return not self.env["ir.config_parameter"].sudo().get_param(SCI_AUTO_DETECT_OFF_PARAM)
+
+    def _sci_message_direction(self, message):
+        """'incoming' for a customer message, 'outgoing' for a team reply, None to ignore."""
+        message = message.sudo()  # the poster may be OdooBot (mail gateway) or a user outside the group
+        if message.message_type not in SCI_CONVERSATION_TYPES:
+            return None
+        if message.is_internal or message.subtype_id.internal:
+            return None  # internal notes are not part of the conversation with the customer
+        author = message.author_id
+        if author and author == self.env.ref("base.partner_root", raise_if_not_found=False):
+            return None  # OdooBot: lead enrichment and other automated posts
+        internal = author and author.with_context(active_test=False).user_ids.filtered(lambda u: not u.share)
+        return "outgoing" if internal else "incoming"
+
+    def _sci_on_message_posted(self, message):
+        if len(self) != 1 or not self._sci_auto_detect_enabled():
+            return
+        direction = self._sci_message_direction(message)
+        if not direction:
+            return
+        # sudo: the poster is often not an inbox user (incoming mail runs as OdooBot). Only this
+        # lead's own sci_* workflow fields are written; nothing is read or shown through sudo.
+        lead = self.sudo()
+        when = message.date or fields.Datetime.now()
+        if direction == "incoming":
+            vals = {
+                "sci_awaiting_reply": True,
+                "sci_last_incoming_at": when,
+                "sci_state": "needs_action",
+                "sci_update_source": "customer_reply",
+                "sci_updated_by_id": False,
+            }
+        else:
+            vals = {"sci_awaiting_reply": False, "sci_last_outgoing_at": when}
+            if not lead.sci_state or lead.sci_state == "needs_action":
+                vals.update(sci_state="waiting", sci_update_source="team_reply", sci_updated_by_id=False)
+        lead.write(vals)
 
     # ------------------------------------------------------------------
     # Public RPC API used by the Smart Chatter Inbox client action.
@@ -223,6 +298,9 @@ class CrmLead(models.Model):
             domains += [mine, needs_action | Domain("sci_state", "=", "waiting")]
         elif quick == "needs_action":
             domains.append(needs_action)
+        elif quick == "unanswered":
+            # The customer wrote last; a lead snoozed after that stays hidden until it wakes up.
+            domains += [Domain("sci_awaiting_reply", "=", True), ~snoozed_active]
         elif quick == "snoozed":
             domains.append(snoozed_active)
         elif quick in ("waiting", "done"):
@@ -300,6 +378,8 @@ class CrmLead(models.Model):
                 "effective_owner": owner or m2o(lead, "user_id"),
                 "snooze_until": dt(lead.sci_snooze_until),
                 "updated_at": dt(lead.sci_updated_at),
+                "awaiting_reply": bool(lead.sci_awaiting_reply),
+                "last_incoming_at": dt(lead.sci_last_incoming_at),
             }
             if "email_from" in field_names:
                 row.update({
@@ -310,6 +390,8 @@ class CrmLead(models.Model):
                     "activity_date_deadline": fields.Date.to_string(lead.activity_date_deadline)
                     if lead.activity_date_deadline else False,
                     "updated_by": m2o(lead, "sci_updated_by_id"),
+                    "last_outgoing_at": dt(lead.sci_last_outgoing_at),
+                    "update_source": lead.sci_update_source or False,
                 })
             rows.append(row)
         return rows

@@ -70,6 +70,17 @@ if existing < N_LEADS:
         env.cr.commit()
     print(f"seeded in {time.time() - t0:.0f}s", flush=True)
 
+HAS_REPLY_DETECTION = "sci_awaiting_reply" in Lead._fields
+if HAS_REPLY_DETECTION:
+    # About 1 lead in 5 has an unanswered customer message (set directly: the bulk SQL
+    # messages above bypass the posting hook on purpose).
+    env.cr.execute("""
+        UPDATE crm_lead SET sci_awaiting_reply = (id % 5 = 0),
+               sci_last_incoming_at = CASE WHEN id % 5 = 0 THEN now() END
+         WHERE name LIKE 'BENCH %'
+    """)
+    env.cr.commit()
+
 env.cr.execute("SELECT count(*) FROM crm_lead WHERE name LIKE 'BENCH %%'")
 leads_count = env.cr.fetchone()[0]
 env.cr.execute("SELECT count(*) FROM mail_message WHERE model = 'crm.lead'")
@@ -116,6 +127,9 @@ for untriaged in (False, True):
     measure(f"[{tag}] manager  page 1 (30)", manager, lambda m: m.sci_get_inbox_page({"quick": "needs_action"}))
     measure(f"[{tag}] manager  My Queue", manager, lambda m: m.sci_get_inbox_page({"quick": "my"}))
     measure(f"[{tag}] manager  snoozed", manager, lambda m: m.sci_get_inbox_page({"quick": "snoozed"}))
+    if HAS_REPLY_DETECTION:
+        measure(f"[{tag}] seller   unanswered", seller, lambda m: m.sci_get_inbox_page({"quick": "unanswered"}))
+        measure(f"[{tag}] manager  unanswered", manager, lambda m: m.sci_get_inbox_page({"quick": "unanswered"}))
 measure("seller   filter options", seller, lambda m: m.sci_get_filter_options())
 measure("seller   item detail", seller, lambda m: m.sci_get_item(some_lead.id))
 measure("seller   owner candidates", seller, lambda m: m.sci_get_owner_candidates(some_lead.id))

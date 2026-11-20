@@ -53,6 +53,10 @@ with sync_playwright() as p:
     page.goto(INBOX)
 
     check("styles applied (3-pane grid)", lambda: expect(page.locator(".o_sci_body")).to_have_css("display", "grid"))
+    if page.locator(".o_sci_quick_btn[data-quick=unanswered]").count():  # versions with reply detection
+        page.click(".o_sci_quick_btn[data-quick=unanswered]")
+        check("Unanswered lists customer replies", lambda: expect(
+            page.locator(".o_sci_row .o_sci_replied").first).to_contain_text("Customer replied"))
     page.click(".o_sci_quick_btn[data-quick=all]")
     rows = page.locator(".o_sci_row")
     check("rows listed", lambda: expect(rows.first).to_be_visible())
