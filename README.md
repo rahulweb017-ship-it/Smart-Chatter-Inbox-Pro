@@ -1,4 +1,4 @@
-# Smart Chatter Inbox Pro: source repository
+# CRM Follow Up Inbox (formerly Smart Chatter Inbox Pro): source repository
 
 An Odoo app that turns CRM leads into a follow-up queue (Needs Action, Waiting, Done, Snoozed). Sold on the Odoo Apps store for $19.
 
