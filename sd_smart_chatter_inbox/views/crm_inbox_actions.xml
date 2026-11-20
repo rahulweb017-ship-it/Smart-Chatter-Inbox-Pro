@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_sci_inbox" model="ir.actions.client">
+        <field name="name">Smart Chatter Inbox</field>
+        <field name="tag">sd_smart_chatter_inbox.InboxAction</field>
+    </record>
+</odoo>

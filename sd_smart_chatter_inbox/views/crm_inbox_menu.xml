@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sci_inbox"
+              name="Smart Chatter Inbox"
+              parent="crm.crm_menu_sales"
+              action="action_sci_inbox"
+              sequence="2"
+              groups="sd_smart_chatter_inbox.group_sci_user"/>
+</odoo>
