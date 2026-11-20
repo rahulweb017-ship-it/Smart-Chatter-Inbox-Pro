@@ -1,4 +1,4 @@
-"""Generate the animated store thumbnail (banner.gif) and the static hero image.
+"""Generate the animated store thumbnail (banner.gif/png) and the store-page header images.
 
 Usage: python make_thumbnail.py <out_dir>
 Everything is drawn here (no third-party artwork). The queue animation cycles a few
@@ -10,7 +10,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 out = sys.argv[1]
 W, H = 1200, 600
-TEAL, TEAL_DARK, WHITE = (1, 126, 132), (0, 84, 90), (255, 255, 255)
+BRAND, BRAND_DARK, WHITE = (79, 70, 229), (49, 46, 129), (255, 255, 255)  # indigo
+SOFT = (224, 231, 255)
 INK, MUTED, LINE = (33, 37, 41), (108, 117, 125), (226, 232, 235)
 STATES = {
     "needs_action": ("Needs Action", (222, 63, 63), (253, 234, 234)),
@@ -29,14 +30,15 @@ def font(size, bold=True):
     return ImageFont.load_default()
 
 
-def gradient():
+def gradient(W=W, H=H, ring=True):
     img = Image.new("RGB", (W, H))
     d = ImageDraw.Draw(img)
     for y in range(H):
         t = y / H
-        d.line([(0, y), (W, y)], fill=tuple(int(TEAL[i] * (1 - t) + TEAL_DARK[i] * t) for i in range(3)))
+        d.line([(0, y), (W, y)], fill=tuple(int(BRAND[i] * (1 - t) + BRAND_DARK[i] * t) for i in range(3)))
     # soft decorative circles
-    d.ellipse([980, -140, 1320, 200], outline=(40, 160, 168), width=3)
+    if ring:
+        d.ellipse([980, -140, 1320, 200], outline=(129, 140, 248), width=3)
     return img
 
 
@@ -72,18 +74,18 @@ def frame(states, active, pulse):
     # left: pitch
     d.text((64, 70), "Smart Chatter", font=font(60), fill=WHITE)
     d.text((64, 140), "Inbox Pro", font=font(60), fill=WHITE)
-    d.text((64, 228), "Your Odoo CRM follow-up queue", font=font(28, False), fill=(214, 240, 241))
+    d.text((64, 228), "Your Odoo CRM follow-up queue", font=font(28, False), fill=SOFT)
     for i, line in enumerate(["Status for every lead", "Owners and snooze", "Native chatter & activities"]):
         y = 290 + i * 44
-        d.ellipse([64, y + 6, 82, y + 24], fill=(120, 220, 170))
+        d.ellipse([64, y + 6, 82, y + 24], fill=(165, 180, 252))
         d.text((96, y + 15), line, font=font(24, False), fill=WHITE, anchor="lm")
     d.rounded_rectangle([64, 452, 300, 524], radius=36, fill=WHITE)
-    d.text((182, 488), "Only $19", font=font(34), fill=TEAL_DARK, anchor="mm")
-    d.text((320, 488), "Odoo 19 & 20", font=font(24), fill=(214, 240, 241), anchor="lm")
+    d.text((182, 488), "Only $19", font=font(34), fill=BRAND_DARK, anchor="mm")
+    d.text((320, 488), "Odoo 19 & 20", font=font(24), fill=SOFT, anchor="lm")
 
     # right: mock inbox card
     x0, y0, x1, y1 = 600, 60, 1150, 540
-    d.rounded_rectangle([x0 + 8, y0 + 12, x1 + 8, y1 + 12], radius=22, fill=(0, 60, 64))
+    d.rounded_rectangle([x0 + 8, y0 + 12, x1 + 8, y1 + 12], radius=22, fill=(30, 27, 75))
     d.rounded_rectangle([x0, y0, x1, y1], radius=22, fill=WHITE)
     d.rounded_rectangle([x0, y0, x1, y0 + 64], radius=22, fill=(245, 248, 249))
     d.rectangle([x0, y0 + 40, x1, y0 + 64], fill=(245, 248, 249))
@@ -97,8 +99,8 @@ def frame(states, active, pulse):
     for i, ((name, partner), state) in enumerate(zip(LEADS, states)):
         ry = y0 + 64 + i * row_h
         if i == active:
-            d.rectangle([x0, ry, x1, ry + row_h], fill=(232, 246, 246))
-            d.rectangle([x0, ry, x0 + 6, ry + row_h], fill=TEAL)
+            d.rectangle([x0, ry, x1, ry + row_h], fill=(238, 242, 255))
+            d.rectangle([x0, ry, x0 + 6, ry + row_h], fill=BRAND)
         if i:
             d.line([(x0 + 20, ry), (x1 - 20, ry)], fill=LINE, width=2)
         d.text((x0 + 28, ry + 34), name, font=font(23), fill=INK, anchor="lm")
@@ -108,7 +110,7 @@ def frame(states, active, pulse):
         badge(d, x1 - 28 - bw, ry + 22, state)
         if i == active and pulse:
             cx, cy = x1 - 28 - bw / 2, ry + 38
-            d.ellipse([cx - 34, cy - 34, cx + 34, cy + 34], outline=(1, 126, 132), width=3)
+            d.ellipse([cx - 34, cy - 34, cx + 34, cy + 34], outline=BRAND, width=3)
     return img
 
 
@@ -120,8 +122,49 @@ for states, active in STEPS:
     durations.append(1150)
 durations[-1] = 2200
 frame(*STEPS[-1], pulse=False).save(f"{out}/banner.png")
-frame(*STEPS[3], pulse=False).save(f"{out}/hero.png")
 palette = frames[6].quantize(colors=96, method=Image.Quantize.MEDIANCUT)
 q = [f.quantize(palette=palette, dither=Image.Dither.NONE) for f in frames]
 q[0].save(f"{out}/banner.gif", save_all=True, append_images=q[1:], duration=durations, loop=0, optimize=True)
 print("thumbnail written to", out)
+
+
+# Store-page header (apps.odoo.com strips CSS backgrounds, so coloured blocks are images).
+def hero():
+    w, h = 1200, 430
+    img = gradient(w, h, ring=False)
+    d = ImageDraw.Draw(img)
+    chip = "ODOO CRM APP  ·  ODOO 19 & 20  ·  COMMUNITY & ENTERPRISE"
+    f = font(17)
+    cw = d.textlength(chip, font=f) + 44
+    d.rounded_rectangle([(w - cw) / 2, 40, (w + cw) / 2, 76], radius=18, outline=(165, 180, 252), width=2)
+    d.text((w / 2, 58), chip, font=f, fill=SOFT, anchor="mm")
+    d.text((w / 2, 132), "Never lose a CRM follow-up again.", font=font(54), fill=WHITE, anchor="mm")
+    for i, line in enumerate(["One shared queue for your leads: Needs Action, Waiting, Done and Snoozed,",
+                              "each with a clear owner. Replies stay in Odoo's own chatter."]):
+        d.text((w / 2, 200 + i * 36), line, font=font(24, False), fill=SOFT, anchor="mm")
+    d.rounded_rectangle([w / 2 - 340, 290, w / 2 - 12, 360], radius=35, fill=WHITE)
+    d.text((w / 2 - 176, 325), "Only $19 · one-time", font=font(28), fill=BRAND_DARK, anchor="mm")
+    d.rounded_rectangle([w / 2 + 12, 290, w / 2 + 300, 360], radius=35, outline=WHITE, width=2)
+    d.text((w / 2 + 156, 325), "Free setup help", font=font(26, False), fill=WHITE, anchor="mm")
+    img.save(f"{out}/hero.png")
+
+
+def band(name, title, items):
+    """Dark stat band, e.g. the numbers section."""
+    w, h = 1200, 250
+    img = gradient(w, h, ring=False)
+    d = ImageDraw.Draw(img)
+    d.text((w / 2, 46), title, font=font(32), fill=WHITE, anchor="mm")
+    col = w / len(items)
+    for i, (big, small) in enumerate(items):
+        cx = col * i + col / 2
+        d.text((cx, 135), big, font=font(48), fill=WHITE, anchor="mm")
+        d.text((cx, 185), small, font=font(19, False), fill=SOFT, anchor="mm")
+    img.save(f"{out}/{name}.png")
+
+
+hero()
+band("numbers", "Small price. Serious engineering.", [
+    ("$19", "one-time price"), ("<100 ms", "server time per page"), ("<10", "SQL queries per page"),
+    ("40", "automated tests"), ("0", "sudo calls")])
+print("header images written to", out)

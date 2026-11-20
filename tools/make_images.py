@@ -3,7 +3,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 out = sys.argv[1]
-TEAL, TEAL_DARK, WHITE = (1, 126, 132), (0, 90, 96), (255, 255, 255)
+BRAND, BRAND_DARK, WHITE = (79, 70, 229), (55, 48, 163), (255, 255, 255)
 COLORS = [(222, 63, 63), (230, 160, 30), (40, 160, 100), (60, 110, 200)]
 
 
@@ -27,9 +27,9 @@ def draw_mark(d, x, y, s):
                             radius=s * 0.03, fill=(200, 212, 214))
 
 
-icon = Image.new("RGB", (256, 256), TEAL)
+icon = Image.new("RGB", (256, 256), BRAND)
 d = ImageDraw.Draw(icon)
-d.rectangle([0, 200, 256, 256], fill=TEAL_DARK)
+d.rectangle([0, 200, 256, 256], fill=BRAND_DARK)
 draw_mark(d, 40, 36, 176)
 icon.save(f"{out}/icon.png")
 

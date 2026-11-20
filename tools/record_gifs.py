@@ -16,7 +16,7 @@ ONLY = sys.argv[3:]  # optional subset: triage snooze filters chatter mobile
 INBOX = f"{BASE}/odoo/action-sd_smart_chatter_inbox.action_sci_inbox"
 WIDTH = 1000  # output GIF width
 CAPTION_H = 54
-TEAL = (1, 126, 132)
+BRAND = (79, 70, 229)  # indigo
 
 CURSOR_JS = """
 () => {
@@ -67,7 +67,7 @@ class Recorder:
         img = Image.open(io.BytesIO(self.page.screenshot())).convert("RGB")
         img = img.resize((self.width, round(img.height * self.width / img.width)), Image.LANCZOS)
         if self.caption:
-            canvas = Image.new("RGB", (img.width, img.height + CAPTION_H), TEAL)
+            canvas = Image.new("RGB", (img.width, img.height + CAPTION_H), BRAND)
             canvas.paste(img, (0, CAPTION_H))
             d = ImageDraw.Draw(canvas)
             d.text((20, CAPTION_H // 2), self.caption, font=font(24 if self.width > 600 else 20),
