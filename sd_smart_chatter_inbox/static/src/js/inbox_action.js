@@ -3,8 +3,8 @@ import { registry } from "@web/core/registry";
 import { useDebounced } from "@web/core/utils/timing";
 import { useService } from "@web/core/utils/hooks";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { InboxApi, QUICK_FILTERS, STATE_HELP, STATE_LABELS } from "./inbox_api";
-import { InboxModel, formatServerDatetime, initialState, timezoneLabel } from "./inbox_model";
+import { InboxApi, QUICK_FILTERS, SOURCE_HELP, STATE_HELP, STATE_LABELS } from "./inbox_api";
+import { InboxModel, formatAge, formatServerDatetime, initialState, timezoneLabel } from "./inbox_model";
 
 export class InboxAction extends Component {
     static template = "sd_smart_chatter_inbox.InboxAction";
@@ -21,9 +21,11 @@ export class InboxAction extends Component {
         this.quickFilters = QUICK_FILTERS;
         this.stateLabels = STATE_LABELS;
         this.stateHelp = STATE_HELP;
+        this.sourceHelp = SOURCE_HELP;
         this.stateKeys = Object.keys(STATE_LABELS);
         this.timezone = timezoneLabel();
         this.formatDatetime = formatServerDatetime;
+        this.formatAge = formatAge;
         this.debouncedSearch = useDebounced((value) => this.model.setFilter("search", value), 350);
         onWillStart(() => this.model.start());
     }

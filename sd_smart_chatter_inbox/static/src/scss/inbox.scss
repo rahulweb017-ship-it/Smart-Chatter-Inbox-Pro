@@ -134,6 +134,8 @@
     }
 
     .o_sci_row_name {
+        flex: 1 1 auto;
+        min-width: 0;
         font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -183,6 +185,24 @@
     .o_sci_badge_snoozed {
         background: #e1effe;
         color: #1e429f;
+    }
+
+    // "Customer replied" chip: outline so it reads differently from the status badge.
+    .o_sci_replied {
+        flex: none;
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        color: #9b1c1c;
+        border: 1px solid #f05252;
+        background: transparent;
+    }
+
+    .o_sci_source {
+        color: #9b1c1c;
     }
 
     .o_sci_pager {
