@@ -1,6 +1,6 @@
 {
-    "name": "CRM Follow Up Inbox | Lead Follow Up, Reminder & Snooze",
-    "summary": "Lead follow up inbox for Odoo CRM: follow up reminder queue, snooze leads, assign follow up owner, track leads waiting for reply. Sales follow up tracker for teams.",
+    "name": "CRM Follow Up Inbox | Unanswered Leads, Reminder & Snooze",
+    "summary": "Lead follow up inbox for Odoo CRM: detects unanswered customer emails automatically, unanswered leads list, follow up reminder queue, snooze leads, assign follow up owner, track leads waiting for reply. Sales follow up tracker for teams.",
     "version": "17.0.1.1.0",
     "category": "Sales/CRM",
     "author": "Softdeviser",

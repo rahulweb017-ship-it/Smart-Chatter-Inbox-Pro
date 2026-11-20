@@ -139,8 +139,8 @@ def hero():
     d.rounded_rectangle([(w - cw) / 2, 40, (w + cw) / 2, 76], radius=18, outline=(165, 180, 252), width=2)
     d.text((w / 2, 58), chip, font=f, fill=SOFT, anchor="mm")
     d.text((w / 2, 132), "Never lose a CRM follow up again.", font=font(54), fill=WHITE, anchor="mm")
-    for i, line in enumerate(["One shared queue for your leads: Needs Action, Waiting, Done and Snoozed,",
-                              "each with a clear owner. Replies stay in Odoo's own chatter."]):
+    for i, line in enumerate(["A customer email puts the lead back in Needs Action, flagged Unanswered.",
+                              "Your reply moves it to Waiting. Snooze and owners included."]):
         d.text((w / 2, 200 + i * 36), line, font=font(24, False), fill=SOFT, anchor="mm")
     d.rounded_rectangle([w / 2 - 340, 290, w / 2 - 12, 360], radius=35, fill=WHITE)
     d.text((w / 2 - 176, 325), "Only $19 · one-time", font=font(28), fill=BRAND_DARK, anchor="mm")
@@ -166,5 +166,5 @@ def band(name, title, items):
 hero()
 band("numbers", "Small price. Serious engineering.", [
     ("$19", "one-time price"), ("<100 ms", "server time per page"), ("<10", "SQL queries per page"),
-    ("40", "automated tests"), ("0", "sudo calls")])
+    ("55+", "automated tests"), ("4", "Odoo versions: 17 to 20")])
 print("header images written to", out)

@@ -7,12 +7,13 @@ import io
 import sys
 import time
 import urllib.request
+from datetime import datetime, timedelta
 
 from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
 BASE, OUT = sys.argv[1], sys.argv[2]
-ONLY = sys.argv[3:]  # optional subset: triage snooze filters chatter mobile
+ONLY = sys.argv[3:]  # optional subset: triage snooze filters chatter mobile reply
 INBOX = f"{BASE}/odoo/action-sd_smart_chatter_inbox.action_sci_inbox"
 WIDTH = 1000  # output GIF width
 CAPTION_H = 54
@@ -138,6 +139,19 @@ def open_inbox(page, quick="all"):
     page.wait_for_timeout(600)
 
 
+def rpc(page, model, method, args, kwargs=None):
+    """Call the server as the logged-in user, the same JSON-RPC the web client uses."""
+    return page.evaluate(
+        """async ([model, method, args, kwargs]) => {
+            const r = await fetch('/web/dataset/call_kw', {method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({jsonrpc: '2.0', method: 'call', params: {model, method, args, kwargs}})});
+            const j = await r.json();
+            if (j.error) throw new Error(JSON.stringify(j.error).slice(0, 600));
+            return j.result;
+        }""", [model, method, args, kwargs or {}])
+
+
 def want(name):
     return not ONLY or name in ONLY
 
@@ -171,7 +185,7 @@ with sync_playwright() as p:
         r.click(".o_sci_row:has-text('Annual support renewal')", 1000)
         r.select("#o_sci_state", "snoozed", 800)
         r.move_to("#o_sci_snooze")
-        page.fill("#o_sci_snooze", "2026-11-20T09:30")
+        page.fill("#o_sci_snooze", (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%dT09:30"))
         page.wait_for_timeout(200)
         r.shot(1000)
         r.click(".o_sci_save", 1200)
@@ -216,6 +230,29 @@ with sync_playwright() as p:
         r.shot(700)
         r.click(".o-mail-Chatter button:has-text('Send message')", 2000)
         r.save("gif_chatter.gif")
+
+    # 6. Reply detection: a real customer email goes through Odoo's mail gateway.
+    if want("reply"):
+        name = "Trade show lead – POS demo"
+        lead = rpc(page, "crm.lead", "search_read", [[["name", "=", name]], ["partner_id", "email_from"]])[0]
+        rpc(page, "crm.lead", "write", [[lead["id"]], {"sci_state": "waiting", "sci_awaiting_reply": False}])
+        open_inbox(page, "waiting")
+        r = Recorder(page)
+        r.caption = "This lead is waiting for the customer"
+        r.move_to(f".o_sci_row:has-text('{name}')")
+        r.shot(1700)
+        raw = ("From: Harbor Retail <harbor@example.com>\r\nTo: sales@example.com\r\n"
+               f"Subject: Re: {name}\r\nMessage-ID: <gif-reply-{time.time()}@example.com>\r\n"
+               "Content-Type: text/plain; charset=utf-8\r\n\r\nThanks for the demo! Can we get a quote for 3 stores?\r\n")
+        rpc(page, "mail.thread", "message_process", ["crm.lead", raw], {"thread_id": lead["id"]})
+        r.caption = "The customer emails back..."
+        r.shot(1300)
+        r.caption = "...and the lead is back in Needs Action, flagged Unanswered"
+        r.click(".o_sci_quick_btn[data-quick=unanswered]", 1800)
+        r.click(f".o_sci_row:has-text('{name}')", 2400)
+        r.caption = "No manual triage: it's also at the top of Needs Action"
+        r.click(".o_sci_quick_btn[data-quick=needs_action]", 1800)
+        r.save("gif_reply.gif")
 
     # 5. Phone layout.
     if want("mobile"):

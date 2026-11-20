@@ -20,7 +20,7 @@ A CRM follow-up queue. Each lead or opportunity gets a follow-up status (**Needs
 
 ## Installation
 1. Copy `sd_smart_chatter_inbox` into a folder on your `addons_path`.
-2. Update the Apps list and install **CRM Follow Up Inbox | Lead Follow Up, Reminder & Snooze** (technical name `sd_smart_chatter_inbox`).
+2. Update the Apps list and install **CRM Follow Up Inbox | Unanswered Leads, Reminder & Snooze** (technical name `sd_smart_chatter_inbox`).
 3. Give users the group **Smart Chatter Inbox / User** (Settings > Users > Access Rights > Sales section). The administrator gets it on install.
 4. Optional: CRM > Configuration > Settings > **Include untriaged leads**. **Detect customer replies automatically** is on by default; it only reacts to messages posted after install.
 

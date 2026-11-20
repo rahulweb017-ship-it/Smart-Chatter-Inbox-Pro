@@ -70,8 +70,16 @@ if "sci_awaiting_reply" in Lead._fields:
     }
     for name, body in replies.items():
         lead = Lead.search([("name", "=", name)], limit=1)
-        if lead and not lead.sci_awaiting_reply:
+        if not lead:
+            continue
+        posted = lead.message_ids.filtered(lambda m: m.message_type == "email" and body in (m.body or ""))
+        if not posted:
             lead.message_post(body=body, message_type="email", author_id=lead.partner_id.id,
                               subtype_xmlid="mail.mt_comment")
+        else:  # re-run: restore what the email set instead of posting it again
+            (posted[1:]).unlink()
+            lead.write({"sci_state": "needs_action", "sci_awaiting_reply": True,
+                        "sci_last_incoming_at": posted[0].date, "sci_update_source": "customer_reply",
+                        "sci_updated_by_id": False})
 env.cr.commit()
 print("seeded", Lead.search_count([]))
