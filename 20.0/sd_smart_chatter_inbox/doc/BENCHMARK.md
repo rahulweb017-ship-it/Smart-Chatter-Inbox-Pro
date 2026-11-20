@@ -15,6 +15,8 @@
 | Manager: Needs Action, first page of 30 (3,073 matches) | 67.1 ms | 94.0 ms | 8 |
 | Manager: Snoozed (968 matches) | 46.7 ms | 56.6 ms | 8 |
 | Manager: first page with "Include untriaged leads" on (5,063 matches) | 70.9 ms | 79.9 ms | 8 |
+| Salesperson: Unanswered (172 matches; added in 20.0.1.1.0, measured 2026-11-21) | 49.2 ms | 54.2 ms | 8 |
+| Manager: Unanswered (1,585 matches; added in 20.0.1.1.0, measured 2026-11-21) | 51.5 ms | 54.8 ms | 8 |
 | Filter options | 16.9 ms | 32.0 ms | 5 |
 | Lead details | 33.3 ms | 43.7 ms | 9 |
 | Owner choices | 37.3 ms | 47.2 ms | 8 |

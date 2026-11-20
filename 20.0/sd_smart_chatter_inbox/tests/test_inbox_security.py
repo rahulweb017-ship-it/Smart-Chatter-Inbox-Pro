@@ -173,6 +173,7 @@ class TestInboxSecurity(SciCommon):
         Lead = self.env["crm.lead"]
         for name in PUBLIC_METHODS:
             self.assertTrue(get_public_method(Lead, name))
-        for name in ("_sci_build_domain", "_sci_get_accessible", "_sci_serialize", "_sci_owner_candidates"):
+        for name in ("_sci_build_domain", "_sci_get_accessible", "_sci_serialize", "_sci_owner_candidates",
+                     "_sci_on_message_posted", "_sci_message_direction", "_sci_auto_detect_enabled"):
             with self.assertRaises(AccessError):
                 get_public_method(Lead, name)

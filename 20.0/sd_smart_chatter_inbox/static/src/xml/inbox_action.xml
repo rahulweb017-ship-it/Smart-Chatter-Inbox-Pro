@@ -98,6 +98,8 @@
                                     t-on-click="() => this.model.select(item.lead_id)">
                                     <div class="o_sci_row_main">
                                         <span class="o_sci_row_name" t-out="item.name"/>
+                                        <span t-if="item.awaiting_reply" class="o_sci_replied"
+                                              t-att-title="'Customer wrote ' + this.formatDatetime(item.last_incoming_at)">Customer replied<t t-if="item.last_incoming_at"> · <t t-out="this.formatAge(item.last_incoming_at)"/></t></span>
                                         <span t-att-class="this.stateBadgeClass(item.effective_state)" t-out="this.stateLabels[item.effective_state]"/>
                                     </div>
                                     <div class="o_sci_row_meta">
@@ -156,6 +158,10 @@
                             <dt>Sales team</dt><dd t-out="(d.team and d.team.name) or '—'"/>
                             <dt t-if="d.company">Company</dt><dd t-if="d.company" t-out="d.company.name"/>
                             <dt t-if="d.activity_date_deadline">Next activity</dt><dd t-if="d.activity_date_deadline" t-out="d.activity_date_deadline"/>
+                            <dt t-if="d.last_incoming_at">Last customer message</dt>
+                            <dd t-if="d.last_incoming_at" class="o_sci_last_incoming"><t t-out="this.formatDatetime(d.last_incoming_at)"/><span t-if="d.awaiting_reply" class="o_sci_replied ms-2">Unanswered</span></dd>
+                            <dt t-if="d.last_outgoing_at">Last team reply</dt>
+                            <dd t-if="d.last_outgoing_at" class="o_sci_last_outgoing" t-out="this.formatDatetime(d.last_outgoing_at)"/>
                             <dt t-if="d.updated_at">Inbox updated</dt>
                             <dd t-if="d.updated_at"><t t-out="this.formatDatetime(d.updated_at)"/><t t-if="d.updated_by"> · <t t-out="d.updated_by.name"/></t></dd>
                         </dl>
@@ -170,6 +176,7 @@
                                     </t>
                                 </select>
                                 <small class="text-muted d-block mb-2" t-out="this.stateHelp[this.state.form.state]"/>
+                                <small t-if="this.sourceHelp[d.update_source] and this.state.form.state === d.state" class="d-block mb-2 o_sci_source" t-out="this.sourceHelp[d.update_source]"/>
 
                                 <t t-if="this.state.form.state === 'snoozed'">
                                     <label for="o_sci_snooze">Snooze until <span class="text-muted">(<t t-out="this.timezone"/>)</span></label>

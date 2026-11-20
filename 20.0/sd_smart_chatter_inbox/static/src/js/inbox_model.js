@@ -73,6 +73,21 @@ export function formatServerDatetime(value) {
     return value ? formatDateTime(deserializeDateTime(value)) : "";
 }
 
+/** Short age of a server datetime: "5m", "3h", "2d". Empty when unknown. */
+export function formatAge(value, now = luxon.DateTime.utc()) {
+    if (!value) {
+        return "";
+    }
+    const minutes = Math.max(0, Math.floor(now.diff(deserializeDateTime(value).toUTC(), "minutes").minutes));
+    if (minutes < 60) {
+        return _t("%sm", Math.max(1, minutes));
+    }
+    if (minutes < 60 * 24) {
+        return _t("%sh", Math.floor(minutes / 60));
+    }
+    return _t("%sd", Math.floor(minutes / (60 * 24)));
+}
+
 export function serverToLocalInput(value) {
     return value ? deserializeDateTime(value).toFormat(LOCAL_INPUT_FORMAT) : "";
 }

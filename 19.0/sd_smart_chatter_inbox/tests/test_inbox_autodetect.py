@@ -29,9 +29,10 @@ class TestInboxAutoDetect(SciCommon):
             f"Message-ID: <sci-{next(_message_ids)}-{fields.Datetime.now().timestamp()}@example.com>\r\n"
             "Content-Type: text/plain; charset=utf-8\r\n\r\nHello, any news on my quote?\r\n"
         )
-        lead_id = self.env["mail.thread"].message_process(
+        result = self.env["mail.thread"].message_process(
             "crm.lead", raw, thread_id=lead.id if lead else None)
-        return self.env["crm.lead"].browse(lead_id)
+        # Odoo 17-19 return the record id, Odoo 20 returns the record itself.
+        return self.env["crm.lead"].browse(getattr(result, "id", result))
 
     def team_reply(self, lead, user, **kwargs):
         kwargs.setdefault("message_type", "comment")
