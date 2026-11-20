@@ -133,12 +133,12 @@ def hero():
     w, h = 1200, 430
     img = gradient(w, h, ring=False)
     d = ImageDraw.Draw(img)
-    chip = "ODOO CRM APP  ·  ODOO 19 & 20  ·  COMMUNITY & ENTERPRISE"
+    chip = "ODOO CRM APP  ·  ODOO 18, 19 & 20  ·  COMMUNITY & ENTERPRISE"
     f = font(17)
     cw = d.textlength(chip, font=f) + 44
     d.rounded_rectangle([(w - cw) / 2, 40, (w + cw) / 2, 76], radius=18, outline=(165, 180, 252), width=2)
     d.text((w / 2, 58), chip, font=f, fill=SOFT, anchor="mm")
-    d.text((w / 2, 132), "Never lose a CRM follow-up again.", font=font(54), fill=WHITE, anchor="mm")
+    d.text((w / 2, 132), "Never lose a CRM follow up again.", font=font(54), fill=WHITE, anchor="mm")
     for i, line in enumerate(["One shared queue for your leads: Needs Action, Waiting, Done and Snoozed,",
                               "each with a clear owner. Replies stay in Odoo's own chatter."]):
         d.text((w / 2, 200 + i * 36), line, font=font(24, False), fill=SOFT, anchor="mm")

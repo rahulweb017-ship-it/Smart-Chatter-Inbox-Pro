@@ -3,6 +3,8 @@ from datetime import timedelta
 
 from odoo import fields
 
+# Odoo 19+ calls the user groups field group_ids; 18 calls it groups_id.
+GROUPS = "group_ids" if "group_ids" in env["res.users"]._fields else "groups_id"
 Lead = env["crm.lead"]
 admin = env.ref("base.user_admin")
 team = env["crm.team"].search([], limit=1) or env["crm.team"].create({"name": "Sales"})
@@ -13,10 +15,10 @@ def user(login, name):
     if not u:
         u = env["res.users"].create({
             "login": login, "name": name,
-            "group_ids": [(6, 0, [env.ref("sales_team.group_sale_salesman_all_leads").id,
+            GROUPS: [(6, 0, [env.ref("sales_team.group_sale_salesman_all_leads").id,
                                   env.ref("sd_smart_chatter_inbox.group_sci_user").id])],
         })
-    u.group_ids = [(4, env.ref("sd_smart_chatter_inbox.group_sci_user").id)]  # re-add after a reinstall
+    u[GROUPS] = [(4, env.ref("sd_smart_chatter_inbox.group_sci_user").id)]  # re-add after a reinstall
     return u
 
 

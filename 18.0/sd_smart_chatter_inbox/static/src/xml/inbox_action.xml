@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sd_smart_chatter_inbox.InboxAction">
+        <div class="o_action o_sci_inbox" t-att-class="{'o_sci_show_detail': state.mobilePane === 'detail'}">
+            <header class="o_sci_header">
+                <h1 class="o_sci_title">Smart Chatter Inbox</h1>
+                <div class="o_sci_search">
+                    <label class="visually-hidden" for="o_sci_search_input">Search leads by title or customer</label>
+                    <input id="o_sci_search_input" type="search" class="form-control" maxlength="100"
+                           placeholder="Search lead or customer…"
+                           t-att-value="state.filters.search" t-on-input="onSearchInput"/>
+                </div>
+                <button type="button" class="btn btn-secondary o_sci_filters_toggle"
+                        t-att-aria-expanded="state.filtersOpen ? 'true' : 'false'"
+                        aria-controls="o_sci_filters"
+                        t-on-click="() => state.filtersOpen = !state.filtersOpen">
+                    <i class="fa fa-filter me-1" aria-hidden="true"/>Filters
+                </button>
+                <button type="button" class="btn btn-secondary o_sci_refresh" aria-label="Refresh"
+                        t-att-disabled="state.loading" t-on-click="() => model.loadPage()">
+                    <i class="fa fa-refresh" aria-hidden="true"/>
+                </button>
+            </header>
+
+            <div class="o_sci_body">
+                <aside id="o_sci_filters" class="o_sci_filters" t-att-class="{'o_sci_open': state.filtersOpen}" aria-label="Inbox filters">
+                    <nav class="o_sci_quick" aria-label="Quick filters">
+                        <t t-foreach="quickFilters" t-as="quick" t-key="quick.key">
+                            <button type="button" class="o_sci_quick_btn"
+                                    t-att-class="{'active': state.filters.quick === quick.key}"
+                                    t-att-aria-pressed="state.filters.quick === quick.key ? 'true' : 'false'"
+                                    t-att-data-quick="quick.key"
+                                    t-on-click="() => model.setFilter('quick', quick.key)"
+                                    t-esc="quick.label"/>
+                        </t>
+                    </nav>
+                    <div class="o_sci_advanced">
+                        <label for="o_sci_owner">Owner</label>
+                        <select id="o_sci_owner" class="form-select" t-on-change="(ev) => this.onSelectFilter('owner_id', ev)">
+                            <option value="" t-att-selected="!state.filters.owner_id">Any owner</option>
+                            <t t-foreach="state.options.owners" t-as="owner" t-key="owner.id">
+                                <option t-att-value="owner.id" t-att-selected="state.filters.owner_id === owner.id" t-esc="owner.name"/>
+                            </t>
+                        </select>
+                        <label for="o_sci_team">Sales team</label>
+                        <select id="o_sci_team" class="form-select" t-on-change="(ev) => this.onSelectFilter('team_id', ev)">
+                            <option value="" t-att-selected="!state.filters.team_id">Any team</option>
+                            <t t-foreach="state.options.teams" t-as="team" t-key="team.id">
+                                <option t-att-value="team.id" t-att-selected="state.filters.team_id === team.id" t-esc="team.name"/>
+                            </t>
+                        </select>
+                        <t t-if="state.options.companies.length > 1">
+                            <label for="o_sci_company">Company</label>
+                            <select id="o_sci_company" class="form-select" t-on-change="(ev) => this.onSelectFilter('company_id', ev)">
+                                <option value="" t-att-selected="!state.filters.company_id">Any enabled company</option>
+                                <t t-foreach="state.options.companies" t-as="company" t-key="company.id">
+                                    <option t-att-value="company.id" t-att-selected="state.filters.company_id === company.id" t-esc="company.name"/>
+                                </t>
+                            </select>
+                        </t>
+                        <label for="o_sci_type">Type</label>
+                        <select id="o_sci_type" class="form-select" t-on-change="(ev) => this.onSelectFilter('lead_type', ev)">
+                            <option value="" t-att-selected="!state.filters.lead_type">Leads and opportunities</option>
+                            <option value="lead" t-att-selected="state.filters.lead_type === 'lead'">Leads</option>
+                            <option value="opportunity" t-att-selected="state.filters.lead_type === 'opportunity'">Opportunities</option>
+                        </select>
+                        <button type="button" class="btn btn-link o_sci_reset" t-att-disabled="!model.hasActiveFilters"
+                                t-on-click="() => model.resetFilters()">Reset filters</button>
+                    </div>
+                </aside>
+
+                <section class="o_sci_list" aria-label="Inbox items">
+                    <div t-if="state.loading and !state.page.items.length" class="o_sci_placeholder" role="status">
+                        <i class="fa fa-circle-o-notch fa-spin me-2" aria-hidden="true"/>Loading…
+                    </div>
+                    <div t-elif="state.error" class="o_sci_placeholder o_sci_error" role="alert">
+                        <p t-esc="state.error"/>
+                        <button type="button" class="btn btn-primary" t-on-click="() => model.loadPage()">Try again</button>
+                    </div>
+                    <div t-elif="!state.page.items.length" class="o_sci_placeholder o_sci_empty">
+                        <p class="fw-bold">No leads match these filters.</p>
+                        <p t-if="!state.options.include_untriaged" class="text-muted small">
+                            Tip: set an Inbox Status on a lead (Smart Inbox tab of the lead form)
+                            <t t-if="state.options.is_manager">or enable "Include untriaged leads" in CRM Settings</t>
+                            to bring it into this queue.
+                        </p>
+                        <button t-if="model.hasActiveFilters" type="button" class="btn btn-secondary" t-on-click="() => model.resetFilters()">Reset filters</button>
+                    </div>
+                    <t t-else="">
+                        <ul class="o_sci_rows list-unstyled" role="listbox" aria-label="Leads" tabindex="0"
+                            t-att-aria-busy="state.loading ? 'true' : 'false'" t-on-keydown="onListKeydown">
+                            <t t-foreach="state.page.items" t-as="item" t-key="item.lead_id">
+                                <li class="o_sci_row" role="option"
+                                    t-att-class="{'o_sci_selected': state.selectedId === item.lead_id}"
+                                    t-att-aria-selected="state.selectedId === item.lead_id ? 'true' : 'false'"
+                                    t-att-data-lead-id="item.lead_id"
+                                    t-on-click="() => model.select(item.lead_id)">
+                                    <div class="o_sci_row_main">
+                                        <span class="o_sci_row_name" t-esc="item.name"/>
+                                        <span t-att-class="stateBadgeClass(item.effective_state)" t-esc="stateLabels[item.effective_state]"/>
+                                    </div>
+                                    <div class="o_sci_row_meta">
+                                        <span t-if="item.partner" t-esc="item.partner.name"/>
+                                        <span t-elif="item.partner_name" t-esc="item.partner_name"/>
+                                        <span t-if="item.effective_owner"><i class="fa fa-user me-1" aria-hidden="true"/><t t-esc="item.effective_owner.name"/></span>
+                                        <span t-if="item.team" t-esc="item.team.name"/>
+                                        <span t-if="item.updated_at" class="text-muted" t-esc="formatDatetime(item.updated_at)"/>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-link o_sci_row_open"
+                                            t-att-aria-label="'Open CRM: ' + item.name"
+                                            t-on-click.stop="() => model.openRecord(item.lead_id)">Open CRM</button>
+                                </li>
+                            </t>
+                        </ul>
+                        <nav class="o_sci_pager" aria-label="Pagination">
+                            <span class="o_sci_pager_value" t-esc="model.pageLabel"/>
+                            <button type="button" class="btn btn-secondary btn-sm" aria-label="Previous page"
+                                    t-att-disabled="state.loading or !state.page.offset" t-on-click="() => model.previousPage()">
+                                <i class="fa fa-chevron-left" aria-hidden="true"/>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" aria-label="Next page"
+                                    t-att-disabled="state.loading or !state.page.has_more" t-on-click="() => model.nextPage()">
+                                <i class="fa fa-chevron-right" aria-hidden="true"/>
+                            </button>
+                        </nav>
+                    </t>
+                </section>
+
+                <section class="o_sci_detail" aria-label="Lead details" aria-live="polite">
+                    <button type="button" class="btn btn-link o_sci_back" t-on-click="() => model.backToList()">
+                        <i class="fa fa-arrow-left me-1" aria-hidden="true"/>Back to inbox
+                    </button>
+                    <div t-if="!state.selectedId" class="o_sci_placeholder text-muted">
+                        Select a lead to see its context and update its follow-up status.
+                    </div>
+                    <div t-elif="state.detailLoading and !state.detail" class="o_sci_placeholder" role="status">
+                        <i class="fa fa-circle-o-notch fa-spin me-2" aria-hidden="true"/>Loading…
+                    </div>
+                    <div t-elif="state.detailError" class="o_sci_placeholder o_sci_denied" role="alert">
+                        <p t-esc="state.detailError"/>
+                        <button type="button" class="btn btn-secondary" t-on-click="() => model.backToList()">Back to inbox</button>
+                    </div>
+                    <t t-elif="state.detail">
+                        <t t-set="d" t-value="state.detail"/>
+                        <div class="o_sci_detail_head">
+                            <h2 class="o_sci_detail_name" t-esc="d.name"/>
+                            <span t-att-class="stateBadgeClass(d.effective_state)" t-esc="stateLabels[d.effective_state]"/>
+                        </div>
+                        <dl class="o_sci_facts">
+                            <dt>Customer</dt><dd t-esc="(d.partner and d.partner.name) or d.partner_name or '—'"/>
+                            <dt t-if="d.email_from">Email</dt><dd t-if="d.email_from" t-esc="d.email_from"/>
+                            <dt t-if="d.phone">Phone</dt><dd t-if="d.phone" t-esc="d.phone"/>
+                            <dt>Stage</dt><dd t-esc="(d.stage and d.stage.name) or '—'"/>
+                            <dt>Salesperson</dt><dd t-esc="(d.salesperson and d.salesperson.name) or '—'"/>
+                            <dt>Sales team</dt><dd t-esc="(d.team and d.team.name) or '—'"/>
+                            <dt t-if="d.company">Company</dt><dd t-if="d.company" t-esc="d.company.name"/>
+                            <dt t-if="d.activity_date_deadline">Next activity</dt><dd t-if="d.activity_date_deadline" t-esc="d.activity_date_deadline"/>
+                            <dt t-if="d.updated_at">Inbox updated</dt>
+                            <dd t-if="d.updated_at"><t t-esc="formatDatetime(d.updated_at)"/><t t-if="d.updated_by"> · <t t-esc="d.updated_by.name"/></t></dd>
+                        </dl>
+
+                        <form class="o_sci_workflow" t-on-submit.prevent="() => model.save()">
+                            <fieldset t-att-disabled="!d.can_write or state.saving">
+                                <legend class="visually-hidden">Follow-up workflow</legend>
+                                <label for="o_sci_state">Status</label>
+                                <select id="o_sci_state" class="form-select" t-model="state.form.state">
+                                    <t t-foreach="stateKeys" t-as="key" t-key="key">
+                                        <option t-att-value="key" t-esc="stateLabels[key]"/>
+                                    </t>
+                                </select>
+                                <small class="text-muted d-block mb-2" t-esc="stateHelp[state.form.state]"/>
+
+                                <t t-if="state.form.state === 'snoozed'">
+                                    <label for="o_sci_snooze">Snooze until <span class="text-muted">(<t t-esc="timezone"/>)</span></label>
+                                    <input id="o_sci_snooze" type="datetime-local" class="form-control mb-2" required="required"
+                                           t-model="state.form.snooze_local"/>
+                                </t>
+
+                                <label for="o_sci_owner_select">Inbox owner</label>
+                                <select id="o_sci_owner_select" class="form-select" t-model="state.form.owner_id">
+                                    <option value="">Salesperson (default)</option>
+                                    <t t-foreach="state.candidates" t-as="candidate" t-key="candidate.id">
+                                        <option t-att-value="candidate.id" t-esc="candidate.name"/>
+                                    </t>
+                                </select>
+                                <small class="text-muted d-block mb-2">Only team members who can already see this lead are listed. Assigning an owner does not share the lead.</small>
+
+                                <button type="submit" class="btn btn-primary o_sci_save">
+                                    <i t-if="state.saving" class="fa fa-circle-o-notch fa-spin me-1" aria-hidden="true"/>Save
+                                </button>
+                            </fieldset>
+                            <p t-if="!d.can_write" class="text-muted small mt-2">You can view this lead but not change its follow-up status.</p>
+                        </form>
+
+                        <div class="o_sci_detail_actions">
+                            <button type="button" class="btn btn-secondary o_sci_open_chatter" t-on-click="() => model.openRecord()">
+                                <i class="fa fa-comments me-1" aria-hidden="true"/>Open Chatter
+                            </button>
+                            <button type="button" class="btn btn-secondary o_sci_schedule" t-att-disabled="state.actionBusy"
+                                    t-on-click="() => model.scheduleActivity()">
+                                <i class="fa fa-clock-o me-1" aria-hidden="true"/>Schedule Follow-up
+                            </button>
+                        </div>
+                    </t>
+                </section>
+            </div>
+        </div>
+    </t>
+
+</templates>

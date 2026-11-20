@@ -12,6 +12,8 @@ from odoo import fields
 
 N_LEADS, N_MESSAGES, RUNS = 10_000, 100_000, 15
 STATES = ["needs_action", "waiting", "done", "snoozed", False]
+# Odoo 19+ calls the user groups field group_ids; 18 calls it groups_id.
+GROUPS = "group_ids" if "group_ids" in env["res.users"]._fields else "groups_id"
 Lead = env["crm.lead"]
 random.seed(42)
 
@@ -21,7 +23,7 @@ def get_user(login, groups):
     if not user:
         user = env["res.users"].create({
             "login": login, "name": login,
-            "group_ids": [(6, 0, [env.ref(g).id for g in groups])],
+            GROUPS: [(6, 0, [env.ref(g).id for g in groups])],
         })
     return user
 
