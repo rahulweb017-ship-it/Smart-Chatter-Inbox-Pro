@@ -10,7 +10,7 @@ export const STATE_LABELS = {
 };
 
 export const STATE_HELP = {
-    needs_action: _t("Team follow-up pending. A manual workflow state, not proof an email is unread."),
+    needs_action: _t("Team follow-up pending. Set automatically when the customer writes."),
     waiting: _t("A response is expected from the customer or a third party."),
     done: _t("No immediate follow-up needed."),
     snoozed: _t("Hidden from Needs Action until the selected date and time."),
@@ -19,11 +19,18 @@ export const STATE_HELP = {
 export const QUICK_FILTERS = [
     { key: "my", label: _t("My Queue") },
     { key: "needs_action", label: _t("Needs Action") },
+    { key: "unanswered", label: _t("Unanswered") },
     { key: "waiting", label: _t("Waiting") },
     { key: "snoozed", label: _t("Snoozed") },
     { key: "done", label: _t("Done") },
     { key: "all", label: _t("All Visible") },
 ];
+
+/** Shown under the status when reply detection, not a person, set it. */
+export const SOURCE_HELP = {
+    customer_reply: _t("Set automatically: the customer wrote."),
+    team_reply: _t("Set automatically: your team replied."),
+};
 
 export const PAGE_SIZE = 30;
 
@@ -38,7 +45,13 @@ function ensure(condition) {
 }
 
 function isItem(item) {
-    return Boolean(item) && typeof item === "object" && Number.isInteger(item.lead_id) && typeof item.name === "string";
+    return (
+        Boolean(item) &&
+        typeof item === "object" &&
+        Number.isInteger(item.lead_id) &&
+        typeof item.name === "string" &&
+        (item.awaiting_reply === undefined || typeof item.awaiting_reply === "boolean")
+    );
 }
 
 /** Thin adaptor over the orm service that validates every server response. */

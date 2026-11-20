@@ -28,7 +28,9 @@ errors = []
 
 
 def login(page):
-    page.goto(f"{BASE}/web/login")
+    # Let the login page finish loading: on Odoo 17 in Firefox, submitting while its translations
+    # are still loading aborts them and the login page's own components log hundreds of errors.
+    page.goto(f"{BASE}/web/login", wait_until="networkidle")
     page.fill("input[name=login]", LOGIN)
     page.fill("input[name=password]", PASSWORD)
     page.click("button[type=submit]")
