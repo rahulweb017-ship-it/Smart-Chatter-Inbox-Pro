@@ -13,10 +13,13 @@ These notes were checked against the Odoo 18.0 source at commit `98e48692` (2026
 | Translations | `self.env._()` exists. | Same code as 19. |
 | Activity dialog | Wizard model `mail.activity.schedule`, opened as in `mail/static/src/core/web/store_service_patch.js`. | **Schedule Follow-up** opens this wizard. |
 | Frontend | Owl 2 with `useState` and `static props`. No `@odoo-module` header needed. | `inbox_action.js` is identical to 19. |
-| Tests | `TransactionCase`, `HttpCase.start_tour`, `browser_js`, `new_test_user`, and Hoot tests in `web.assets_unit_tests`. | `tests/` and `static/tests/` are identical to 19. |
+| Tests | `TransactionCase`, `HttpCase.start_tour`, `browser_js`, `new_test_user`, and Hoot tests in `web.assets_unit_tests`. | `tests/` and `static/tests/` are identical to 19, except the out-of-office case above. |
+| Message hook | `mail.thread._message_post_after_hook(self, message, msg_values)`, as in 19. Incoming email goes through `message_process`, which returns the record id. | Reply detection (18.0.1.1.0) overrides it on `crm.lead` with the same code as 19. |
+| Message types (**differs**) | `email`, `comment`, `email_outgoing`, `notification`, `auto_comment`, `user_notification`. There is no `out_of_office`. | Only `email` and `comment` count, as in 19. Out-of-office replies cannot be told apart, so they count as a customer message. The test for ignored messages skips that case. |
 | Views | Lead form anchor `//page[@name='internal_notes']`. Settings anchor `//app[@name='crm']`. | Same views as 19. |
 
 ## Snooze rules
 - Needs Action = no status, or `needs_action`, or `snoozed` with `sci_snooze_until <= now`.
 - Snoozed = `snoozed` with `sci_snooze_until > now`.
+- Unanswered = `sci_awaiting_reply` and not Snoozed.
 - When a snooze expires, nothing is written to the database.
