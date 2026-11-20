@@ -4,6 +4,7 @@
 
 - Reply detection: a customer email or message moves the lead to Needs Action and marks it "Customer replied"; a team reply from the chatter moves Needs Action to Waiting. Notes, automated messages, mass mailings, out-of-office replies and OdooBot are ignored.
 - New "Unanswered" quick filter, "Customer replied" chip with age, and last customer message / last team reply dates in the details pane and on the lead form.
+- Store listing renamed to "CRM Follow Up Inbox | Unanswered Leads, Reminder & Snooze", with a new reply-detection demo and re-recorded GIFs and screenshots.
 - New setting "Detect customer replies automatically" (on by default). Existing leads and old messages are not changed on upgrade.
 - Tests: 14 reply-detection tests through the real mail gateway, 2 more Hoot tests and a tour step.
 
